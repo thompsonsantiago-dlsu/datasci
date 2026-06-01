@@ -1,0 +1,77 @@
+---
+title: "A04_Documentation"
+author: "Thompson Santiago"
+date: "2026-06-01"
+output: html_document
+---
+
+**__Understanding personal formatting quirks__**
+
+*Single hashtag comments (#) refer to instructions from Sir Christian and are copy-pasted for the most part.*
+
+*Double hashtag comments (##) are personal comments and usually attempt to explain the code or provide interpretations gleaned from its output.*
+
+# **__Initialization__**
+
+## Reading the file and installing the libraries needed
+```{r init1, echo = TRUE, warning = TRUE}
+# Read in the CSV file as a dataframe.
+htypes <- data.frame(read.csv(file = "C:/DLSU/25-26/[4] LBBBI27/activities/a04/habitat_types.csv"))
+
+# Install tidveryse and load.
+library(tidyverse)
+
+# Show the data structure using the tidyverse equivalent of the “str” base R.
+str(htypes)
+```
+
+# Data shaping
+
+## Subsetting for our purposes
+```{r ds1, echo = TRUE, warning = TRUE}
+# Subset the data by taking only the following columns: Transect, Hatypes, SmallTrees, and FloweringTrees.
+subset_data <- select(htypes, "Transect", "Htypes", "SmallTrees", "FloweringTrees")
+```
+
+## Sort for small tree count
+```{r ds2, echo = TRUE, warning = TRUE}
+# From the subset of data, filter the habitat type “CVT” and sort the “SmallTrees” variable in descending order.
+# Which transect has the most count of small trees, and how many?
+cvt_desc_data <- filter(subset_data, Htypes=="CVT") |> arrange(desc(SmallTrees))
+```
+
+## Get mean of flowering tree number per habitat
+```{r ds3, echo = TRUE, warning = TRUE}
+# Also, calculate the mean number of flowering trees per habitat type.
+# Which habitat types do not differ significantly in the mean number of flowering trees?
+# fm = flower mean
+cvt_fm <- filter(subset_data, Htypes=="ESG") |> summarize(mean(FloweringTrees))
+esg_fm <- filter(subset_data, Htypes=="ESG") |> summarize(mean(FloweringTrees))
+asg_fm <- filter(subset_data, Htypes=="ASG") |> summarize(mean(FloweringTrees))
+## CVT and ESG do not significantly differ in flowering tree mean.
+```
+
+## Calculate difference between herb and ground cover.
+```{r ds4, echo = TRUE, warning = TRUE}
+# In your subset of data (e.g., from step #4), add a new column showing the difference between HerbsCover and GroundCover.
+# Name the new column as “HerbGroundDiff.” Make sure to assign the output of this step to a new variable called “sel_df_mod.”
+self_df_mod <- subset_data |> mutate(HerbGroundDiff=htypes$HerbsCover-htypes$GroundCover)
+
+# Are there any transects with no difference? Can you identify at least three transects?
+## IT1P5, IT3P1, ST1P3
+```
+
+## "lattice-ify" the table.
+```{r ds5, echo = TRUE, warning = TRUE}
+# Convert your self_df_mod output to a wider version (i.e., using pivot_wider).
+# The output should have columns like:
+# SmallTrees_ESG, FloweringTrees_ESG, HerbGroundDiff_ESG, SmallTrees_CVT, FloweringTrees_CVT, etc.
+self_df_wide <- self_df_mod |> pivot_wider(names_from = Htypes, values_from = c(SmallTrees, FloweringTrees, HerbGroundDiff))
+```
+
+# Reflection
+* This part is not code.*
+```{r ref1, echo = TRUE, warning = TRUE}
+# Tidyverse is nice in that the syntax is more streamlined and uses more words which I'm more used to, I think.
+# The pipe also helps in not making this(kind(of(thing(happen)))).
+```
