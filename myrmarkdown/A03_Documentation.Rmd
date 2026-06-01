@@ -1,0 +1,199 @@
+---
+title: "A03 documentation"
+author: "Thompson Santiago"
+output: html_document
+date: "2026-06-01"
+---
+
+# Initialization
+
+## File read
+```{r setup}
+# Read in the CSV file as a dataframe using the function “read.csv”.
+herp <- read.csv(file = "C:/DLSU/25-26/[4] LBBBI27/activities/a03/herpetozoa-033-095-s001.csv")
+```
+
+## Data clean-up
+
+```{r chunks, echo = TRUE, warning = TRUE}
+# Make sure to clean the data prior to performing the tasks below. Do not attempt to clean the data in Excel. Perform all cleaning (e.g., NA removal) in R using the code we discussed.
+library(datasets)
+good <- complete.cases(herp)
+head(herp[good,])
+tail(herp[good,])
+herp_data <- herp[good,]
+
+# Show the data structure.
+class(herp_data)
+```
+
+# Tasks
+
+## Elevation data
+```{r chunks1, echo = TRUE, warning = TRUE}
+# Subset the elevation data
+elev_data <- data.frame(herp_data[,5])
+elev_data
+class(elev_data)
+
+# and provide the mean, standard deviation, and range.
+mean_elev <- mean(elev_data[,1])
+stdev_elev <- sd(elev_data[,1])
+range_elev <- range(elev_data[,1])
+```
+
+## Subsetting
+```{r chunks2, echo = TRUE, warning = TRUE}
+# Subset the species data (columns G to AG)
+
+sp_data <- herp_data[,7:33]
+
+# and count the total number of observations per species.
+# Show two methods, using a typical loop
+
+## Setting up a table through which I can tally species-occurence pairs
+sp_sums <- data.frame(Names = colnames(herp_data[1,7:33]), Occurrences = 0:0)
+
+for (nm in 1:27) {
+  sp_sums[nm, 2] <- sum(sp_data[,nm])
+  print(c(sp_sums[nm,1],sp_sums[nm,2]), quote = FALSE)
+}
+
+# and a compact loop.
+sso <- sapply(sp_data, sum)
+sso
+```
+
+## Variable set-up: Acquiring most and least abundant spp.
+```{r chunks3, echo = TRUE, warning = TRUE}
+# Which species has the most and the fewest observations?
+
+## Getting the highest and lowest numbers
+sp_range <- range(sp_sums[,2])
+
+## Then finding the indices that contain these numbers (there may be draws/ties, therefore plural)
+sp_fewest <- which(sp_sums[,2] %in% sp_range[1])
+sp_highest <- which(sp_sums[,2] %in% sp_range[2])
+
+sp_ext_obs <- sp_sums[c(sp_fewest, sp_highest), 1:2]
+```
+
+## Extra variable set-up
+```{r chunks4, echo = TRUE, warning = TRUE}
+# Combine the columns of species with the most and fewest observations with habitat types (Htypes).
+
+## What I want to do here is to get all values in column 1 of sp_extremes_and_observations, as well as Htypes, and use them as column header name references to indicate columns to create a subset from "herp_data"with name "sp_extremes_and_htypes" with
+sp_ext_habs <- herp_data[,c(sp_ext_obs[,1], "Htypes")]
+```
+
+## Determine the mean count of these species in each habitat type, then get the mean per column (species)
+```{r chunks5, echo = TRUE, warning = TRUE}
+## SO there are 4 habitat types (ASG, ESG, OGF, CVT) and I have to first create htype-specific subsets,
+## eh = ext_habs
+## I don't know why the spacing between concatenated items in the print features are so random...
+library(tidyverse)
+asg_eh <- filter(sp_ext_habs, Htypes=="ASG")
+esg_eh <- filter(sp_ext_habs, Htypes=="ESG")
+ogf_eh <- filter(sp_ext_habs, Htypes=="OGF")
+cvt_eh <- filter(sp_ext_habs, Htypes=="CVT")
+
+rows_ext_obs <- nrow(sp_ext_obs)
+### setting up vars for next step
+asg_sums <- asg_eh[1,1:rows_ext_obs]
+asg_sums[,(1:nrow(sp_ext_obs))] <- 0
+esg_sums <- esg_eh[1,1:rows_ext_obs]
+esg_sums[,(1:nrow(sp_ext_obs))] <- 0
+ogf_sums <- ogf_eh[1,1:rows_ext_obs]
+ogf_sums[,(1:nrow(sp_ext_obs))] <- 0
+cvt_sums <- cvt_eh[1,1:rows_ext_obs]
+cvt_sums[,(1:nrow(sp_ext_obs))] <- 0
+
+for (col in (1:rows_ext_obs)) {
+  print(c(colnames(asg_eh[col]), "in ASG: ", mean(asg_eh[,col])), quote = FALSE)
+  asg_sums[1,col] <- sum(asg_eh[,col])
+}
+
+for (col in (1:rows_ext_obs)) {
+  print(c(colnames(esg_eh[col]), "in ESG: ", mean(esg_eh[,col])), quote = FALSE)
+  esg_sums[1,col] <- sum(esg_eh[,col])
+}
+
+for (col in (1:rows_ext_obs)) {
+  print(c(colnames(ogf_eh[col]), "in ASG: ", mean(ogf_eh[,col])), quote = FALSE)
+  ogf_sums[1,col] <- sum(ogf_eh[,col])
+}
+
+for (col in (1:rows_ext_obs)) {
+  print(c(colnames(cvt_eh[col]), "in ASG: ", mean(cvt_eh[,col])), quote = FALSE)
+  cvt_sums[1,col] <- sum(cvt_eh[,col])
+}
+```
+
+## Answering some questions
+```{r chunks6, echo = TRUE, warning = TRUE}
+# Which habitat type has the most species counts?
+asg_present <- length(which(asg_sums != 0))
+esg_present <- length(which(esg_sums != 0))
+ogf_present <- length(which(ogf_sums != 0))
+cvt_present <- length(which(cvt_sums != 0))
+most_spp_habs <- which(c(asg_present, esg_present, ogf_present, cvt_present) %in% max(asg_present, esg_present, ogf_present, cvt_present))
+habitat_names <- c("ASG", "ESG", "OGF", "CVT")
+## So ASG and OGF has the greatest number of species present.
+
+print(c("Most species observed in one habitat: ", max(as.character(c(asg_present, esg_present, ogf_present, cvt_present)))), quote = FALSE)
+print("Habitats which include", quote = FALSE)
+for (item in most_spp_habs) {
+  print(habitat_names[item], quote = FALSE)
+}
+```
+
+# Plotting
+
+## Initialization
+```{r chunks7, echo = TRUE, warning = TRUE}
+# From the original dataframe, combine the species total count column (SPPTotal) with the elevation and habitat type columns and create a scatter plot where elevation should be on the x-axis, while species total count is on the y-axis.
+spp_traits <- select(herp_data, "SPPTotal", "Elev", "Htypes")
+plot(spp_traits$Elev, spp_traits$SPPTotal, xlab = "Elevation", ylab = "Species Totals")
+
+# Change the point colors based on habitat type. Are there habitat types with no species observations? What are these?
+hab_col <- c("ASG" = "red", ESG = "green4", OGF = "turquoise", CVT = "orange")
+```
+
+## Scatter plot
+```{r chunks8, echo = TRUE, warning = TRUE}
+plot(spp_traits$Elev, spp_traits$SPPTotal, col = hab_col, xlab = "Elevation", ylab = "Species Totals")
+## I don't think there are any htypes with no species observations?
+```
+
+## Bar plot
+```{r chunks9, echo = TRUE, warning = TRUE}
+# From the combined data of species total counts, elevation, and habitat types, determine the total/sum number of species observed per habitat,
+# and create a bar plot (use the bar plot help) where the x-axis shows the habitat types and the y-axis shows the total species.
+asg_traits <- filter(spp_traits, Htypes=="ASG")
+esg_traits <- filter(spp_traits, Htypes=="ESG")
+ogf_traits <- filter(spp_traits, Htypes=="OGF")
+cvt_traits <- filter(spp_traits, Htypes=="CVT")
+
+asg_spp_sum <- sum(asg_traits[,1])
+esg_spp_sum <- sum(esg_traits[,1])
+ogf_spp_sum <- sum(ogf_traits[,1])
+cvt_spp_sum <- sum(cvt_traits[,1])
+
+barplot(c(asg_spp_sum, esg_spp_sum, ogf_spp_sum, cvt_spp_sum), xlab = "Habitat Types", ylab = "Species Totals", names.arg = c("ASG", "ESG", "OGF", "CVT"))
+```
+
+## Histogram
+```{r chunks10, echo = TRUE, warning = TRUE}
+# Lastly, create a histogram of total species counts using the histogram function. Make sure all axes are properly labeled.
+hist(spp_traits$SPPTotal, main = "Total Species Counts", xlab = "Total Species Counts", ylab = "Frequency")
+```
+
+# Reflection
+```{r chunks11, echo = TRUE, warning = TRUE}
+# Interpretation
+# Based on the summary statistics and preliminary graphs you just created, \
+# how do you describe the relationship between total species observed and habitat types and elevation?
+  ## Total species observed generally decreases as the elevation increases. It also appears to be most plentiful in ASG and OGF, relatively speaking moderate in ESG, and barely any in CVT.
+  ## Interesting to note is that there are only two whole cases (or plots?) of habitat type CVT, so that tracks. Actually, in general the species totals track with the number of data entries for that habitat type:
+  ## ASG has 15 and OGF has 23, which is the only difference in relative ranking, but ESG has 9 and so it makes sense that the more observations you do, the more species you would expect to see.
+```
