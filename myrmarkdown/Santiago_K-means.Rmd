@@ -1,0 +1,124 @@
+---
+title: "Act 7 Code"
+author: "Thompson Santiago"
+date: "2026-06-08"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Library setups
+```{r chunk1, echo = TRUE, warning = TRUE}
+# Setup
+library(tidyverse, knitr)
+library(datasets)
+library(factoextra)
+```
+
+# Part A
+## Setup by cleaning data and subsetting
+```{r chunk2, echo = TRUE, warning = TRUE}
+#########################
+# A. K-means (Single-K)
+#########################
+
+# 2. Read in the morphology data as a dataframe.
+morph_data <- read.csv("C:/DLSU/25-26/[4] LBBBI27/activities/a07/morphology_data.csv")
+class(morph_data)
+
+# 3. Remove the sex column.
+morph_ambi <- morph_data[c(3:ncol(morph_data))]
+
+# 4. Ensure that the dataframe has no NAs.
+morph_good <- morph_ambi[complete.cases(morph_ambi),]
+```
+
+## Scaling the data
+```{r chunk3, echo = TRUE, warning = TRUE}
+# 5. Prior to performing K-means, standardize all values using the “scale” function.
+morph_scaled <- scale(morph_good)
+```
+
+## Performing the first K-means
+```{r chunk4, echo = TRUE, warning = TRUE}
+# 6. Perform K-means with 3 cluster centers using 25 initial random centroids.
+set.seed(123)
+morph_kmeans_result <- kmeans(morph_scaled, centers = 3, nstart = 25)
+
+# 7. Show the cluster assignment and a summary of results by simply printing them to the console.
+morph_kmeans_result
+head(morph_kmeans_result)
+
+# 8. Create a scatter plot with points colored by the assigned cluster.
+plot(
+  morph_scaled[,2],
+  morph_scaled[,1],
+  col = morph_kmeans_result$cluster,
+  xlab = "TD",
+  ylab = "SVL",
+  main = "TD vs SVL",
+  pch = 20
+)
+```
+
+# Part B
+## In a rather convoluted manner, defining indices from which to draw axes to create the elbow plot
+```{r chunk5, echo = TRUE, warning = TRUE}
+#####################
+# B. K-means (loop)
+#####################
+
+# 1. Now, create a loop function to perform K-means with cluster centers from 2 to 10.
+loop_indices <- matrix(nrow = 9, ncol = 2)
+# col1 = totwithins value, col2 = cluster centers quantity
+for(i in 2:10) {
+  morph_kmeans_b <- kmeans(morph_scaled, centers = i, nstart = 25)
+  loop_indices[(i-1),1] <- morph_kmeans_b$tot.withinss
+  loop_indices[(i-1),2] <- i
+}
+```
+
+## Creating the actual elbow plot now
+```{r chunk6, echo = TRUE, warning = TRUE}
+# 2. From the output of your loop function, create an elbow curve plot to determine the optimal K.
+plot(
+  loop_indices[,2],
+  loop_indices[,1],
+  xlab = "n of k clusters",
+  ylab = "Total within Sums of Square",
+  main = "Elbow plot",
+  lwd = 2,
+  cex = 2,
+  pch = 20,
+  type = "b"
+)
+```
+
+## With that said, creating the new kmeans
+```{r chunk7, echo = TRUE, warning = TRUE}
+# 3. Recreate steps 6–8 above using the optimal K determined by the elbow curve.
+optimal_cluster_number <- 4 # define here
+morph_kmeans_opti <- kmeans(morph_scaled, centers = optimal_cluster_number, nstart = 25)
+morph_kmeans_opti
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
