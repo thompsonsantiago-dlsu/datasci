@@ -6,3 +6,6 @@ https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/A03_Documentation.ht
 
 Activity 4
 https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/A04_Documentation.html
+
+Activity 7
+https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Santiago_K-means.html
