@@ -1,0 +1,136 @@
+---
+title: "Activity 8"
+author: "Thompson Santiago"
+date: "2026-06-11"
+output: html_document
+---
+
+# Set-up and Initialization
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r chunk1, echo = TRUE, warning = TRUE}
+# Setup
+library(tidyverse)
+library(knitr)
+library(datasets)
+library(factoextra)
+library(cluster)
+library(ggplot2)
+```
+
+```{r chunk2, echo = TRUE, warning = TRUE}
+# 2. Read in the morphology data as a dataframe.
+morph_data <- read.csv("C:/DLSU/25-26/[4] LBBBI27/activities/a07/morphology_data.csv")
+class(morph_data)
+
+# 3. Remove the sex and population columns.
+morph_ambi <- morph_data[c(3:ncol(morph_data))]
+
+# 4. Ensure that the dataframe has no NAs. Standardize with scale().
+morph_good <- morph_ambi[complete.cases(morph_ambi),]
+morph_scaled <- scale(morph_good)
+rownames(morph_scaled) <- morph_data$Pop
+```
+
+# Part A
+```{r chunk3, echo = TRUE, warning = TRUE}
+# 5. Before performing hierarchical clustering, calculate the “Euclidean distance” 
+#    and use it as your input.
+euc_d <- dist(morph_scaled, method = "euclidean")
+```
+
+## A6
+```{r chunk4, echo = TRUE, warning = TRUE}
+# 6. Perform hierarchical clustering using Ward’s and Single Linkage methods.
+
+## 6a. Ward's
+morph_ward <- hclust(euc_d, method = "ward.D2")
+
+plot(morph_ward,
+     main = "Ward's Method",
+     labels = rownames(morph_scaled),
+     cex = 0.5)
+```
+
+```{r chunk5, echo = TRUE, warning = TRUE}
+## 6b. Single Linkage
+morph_sl <- hclust(euc_d, method = "single")
+
+plot(morph_sl,
+     main = "Single Linkage",
+     labels = rownames(morph_scaled),
+     cex = 0.6)
+```
+
+## A7: Silhouettes
+**For-loop to set up data-store variable first**
+```{r chunk6, echo = TRUE, warning = TRUE}
+# 7. Create a for loop function to explore Ks from 2 to 10 for each method using
+#    the Silhouette score and display the results with a plot.
+morph_avg_sil_widths <- matrix(nrow = 9, ncol = 2)
+
+for (k_val in 2:10) {
+  ward_clusters <- cutree(morph_ward, k = k_val)
+  ward_sil <- silhouette(ward_clusters, euc_d)
+  morph_avg_sil_widths[(k_val-1),1] <- mean(ward_sil[,3])
+  morph_avg_sil_widths[(k_val-1),1]
+  
+  sl_clusters <- cutree(morph_sl, k = k_val)
+  sl_sil <- silhouette(sl_clusters, euc_d)
+  morph_avg_sil_widths[(k_val-1),2] <- mean(sl_sil[,3])
+  morph_avg_sil_widths[(k_val-1),2]
+}
+```
+
+**Plotting the stored data**
+```{r chunk7, echo = TRUE, warning = TRUE}
+plot(
+  2:10,
+  morph_avg_sil_widths[,1],
+  type = "b",
+  lwd = 2,
+  xlab = "Number of Clusters",
+  ylab = "Average Silhouette Widths of morph data (Ward)"
+)
+
+plot(
+  2:10,
+  morph_avg_sil_widths[,2],
+  type = "b",
+  lwd = 2,
+  xlab = "Number of Clusters",
+  ylab = "Average Silhouette Widths of morph data (Single Linkage)"
+)
+```
+
+## Dendrograms with boundaries
+```{r chunk8, echo = TRUE, warning = TRUE}
+# 8. Now, generate a dendrogram for each method,
+#    highlighting the optimal K with colored boxes.
+## Ward's
+plot(morph_ward,
+     main = "Ward's Method",
+     labels = rownames(morph_scaled),
+     cex = 0.5,
+     )
+rect.hclust(morph_ward, k = 2,
+            border = c("red", "blue"))
+
+## Sinkle Ligages
+plot(morph_sl,
+     main = "SInkle Linkages",
+     labels = rownames(morph_scaled),
+     cex = 0.5,
+)
+rect.hclust(morph_ward, k = 2,
+            border = c("red", "blue"))
+```
+
+## B: Reflection
+**Revisit your K-means outputs from the previous activity and compare how the clusters were determined.**
+*This feels like a more concrete, less subjective way to determine optimal cluster numbers. The elbow method felt a little subjective.*
+
+**Are the clusters consistent? If not, what do you think causes this, and how might it influence your interpretation of biological patterns in the data?**
+*Both Ward's and Single Linkages seem to be consistent in terms of the number of suggested clusters. Not consistent with k-means though, and this might be an error in how I conducted the code in the previous activity, or I did it correctly but interpreted it differently.*
