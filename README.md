@@ -12,3 +12,6 @@ https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Santiago_K-means.htm
 
 Activity 8
 https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Santiago_hclust.html
+
+Activity 9
+https://thompsonsantiago-dlsu.github.io/datasci/Santiago_pca.html
