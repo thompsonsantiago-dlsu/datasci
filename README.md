@@ -17,4 +17,4 @@ Activity 9
 https://thompsonsantiago-dlsu.github.io/datasci/Santiago_pca.html
 
 Activity 11
-https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Activity 11/Santiago_linear_reg.html
+https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Activity%2011/Santiago_linear_reg.html
