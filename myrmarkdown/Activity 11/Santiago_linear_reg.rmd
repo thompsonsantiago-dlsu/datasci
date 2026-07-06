@@ -1,0 +1,138 @@
+---
+title: "Santiago Linear Regression"
+author: "Thompson Santiago"
+date: "2026-07-06"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Set-up Phase
+*Libraries to be used, I don't think anything special for this one, also trying something new and that is to code directly in the .rmd file (used to copy-paste everything over but found that .rmd has some nice UI inclusions)*
+```{r libraries}
+library(tidyverse)
+library(terra)
+```
+
+# A. Simple Linear Regression
+*For this portion, I decided on acting out of question order after giving it a read through as it was essentially just one straight motion.*
+```{r maindata}
+# 2. Read in the species data and remove unnecessary rows with NAs.
+herp_csv <- read.csv("C:/DLSU/25-26/[4] LBBBI27/activities/a03/herpetozoa-033-095-s001.csv")
+herp_data <- herp_csv[complete.cases(herp_csv),]
+
+# 4.1 From the species data, subset the longitude and latitude coordinates.
+herp_spat <- herp_data[,c(2,3)]
+class(herp_spat)
+
+# 4.2 Then convert the coordinates to a spatial vector using the “vect” function from the “terra” package.
+herp_vect <- vect(herp_spat, geom=c("Long","Lat"))
+```
+*This code block is dedicated to read-ins and establishment of supplementary data and data variables.*
+```{r suppdata}
+# 3. Read in the elevation data (ph_strm_geo.tif).
+elev_data <- rast("C:/DLSU/25-26/[4] LBBBI27/activities/a10/ph_ strm_geo.tif")
+
+# 5. Using the converted coordinates, extract elevation data for each point with the “extract” function in the “terra” package.
+# (The extracted data will have two columns: “ID” and “Band_1.” The “Band_1” column contains the elevation.)
+elev_extr <- extract(elev_data, herp_vect)
+
+# 6.1 Subset the species data to retain only the species richness column (SPPTotal).
+herp_rich <- matrix(herp_data[,6])
+
+# 6.2 Then combine this column with the extracted elevation. Rename “Band_1” to “elevation.
+herp_elev <- cbind(elev_extr, herp_rich)
+herp_elev <- rename(herp_elev, "Elevation" = "Band_1")
+```
+
+*Using the fruits of the previous code locks to do number stuff! Single linear regression for now for part A.*
+*In single quotes, my thoughts. In comments, the assignment instructions.*
+```{r slr_nums}
+# 7.1 Now, perform simple linear regression using the code from the pre-lab lecture,
+'Raw values assigned to variable names for convenience'
+slr_x <- herp_elev[,2]
+slr_y <- herp_elev[,3]
+
+xb <- mean(slr_x)
+yb <- mean(slr_y)
+
+'Secondary-level variables'
+b <- sum((slr_x - xb) * (slr_y - yb)) / sum((slr_x - xb)^2)
+a <- yb - b*xb
+
+'Write the equation (I guess this will help with understanding what\'s going on'
+cat("Regression Equation:\n")
+cat("y =", round(a,3), "+", round(b,3), "x\n")
+
+'Looks about right, setting it'
+yhat <- a + b * slr_x
+
+slr_data <- data.frame(
+  "Elevation" = slr_x,
+  "Species Richness" = slr_y,
+  "Predicted" = round(yhat, 2)
+)
+```
+*Who up plotting?*
+```{r slr_plot}
+# 7.2 including a plot. 
+plot(herp_elev$"Elevation", herp_elev$"herp_rich",
+     pch = 20,
+     col = "darkcyan",
+     xlab = "Elevation (m)",
+     ylab = "Species Richness (#)",
+     main = "Simple Linear Regression") +
+abline(a, b,
+       col = "darkred",
+       lwd = 2)
+
+# 7.3 What can you infer about the relationship between species and elevation?
+'The single linear regression model observes and predicts decreases in species richness as elevation increases.'
+```
+
+# B. Multiple Linear Regression
+*Read-ins of x-vars beyond the first.*
+```{r precitemp}
+# 1. Read in both annual precipitation and temperature data and extract the data following the instructions from A4–5.
+ph_temps <- rast("C:/DLSU/25-26/[4] LBBBI27/activities/a03/annual_temperature.tif")
+temp_extr <- extract(ph_temps, herp_vect)
+
+ph_preci <- rast("C:/DLSU/25-26/[4] LBBBI27/activities/a03/annual_precipitation.tif")
+preci_extr <- extract(ph_preci, herp_vect)
+
+```
+
+*C-Bind into one dataframe.*
+```{r datacombi}
+# 2. Combine the extracted data with the species and elevation data into a single dataframe.
+herp_multi <- cbind(herp_elev$Elevation, temp_extr$annual_temperature, preci_extr$annual_precipitation)
+herp_multi <- data.frame(herp_multi)
+herp_multi <- rename(herp_multi, "Elevation" = "X1", "Annual Temperature" = "X2", "Annual Precipitation" = "X3")
+class(herp_multi)
+```
+*Multiple linear regression*
+```{r }
+# 3. Perform multiple linear regression using the “lm” function.
+m_model <- lm(herp_elev$"herp_rich" ~ herp_multi$"Elevation" + herp_multi$"Annual Temperature" + herp_multi$"Annual Precipitation")
+
+coef(m_model)
+ma <- coef(m_model)[1]
+m1 <- coef(m_model)[2]
+m2 <- coef(m_model)[3]
+m3 <- coef(m_model)[4]
+
+cat("y =", round(ma,3), "+", round(m1,3), "x1", "+", round(m2,3), "x2", "+", round(m3,3), "x3")
+
+m_yhat <- predict(m_model) |> data.frame()
+print(m_yhat)
+
+summary(m_model)
+
+# 4. Which relationship is statistically significant?
+'Based on the summary of m_model (var name for multiple linear regression model), the annual temperature and annual precipitation of a location is significantly related to its species richness. This is not true of elevation of the place.'
+```
+
+*Okay that's all I have. I still don't know how to generate maps so I will have to submit a new version after all my technical issues are resolved and I learn how to use what I've not been able to learn so far.*
