@@ -15,3 +15,6 @@ https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Santiago_hclust.html
 
 Activity 9
 https://thompsonsantiago-dlsu.github.io/datasci/Santiago_pca.html
+
+Activity 11
+https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Activity 11/Santiago_linear_reg.html
