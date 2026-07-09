@@ -1,0 +1,92 @@
+---
+title: "Santiago_gis"
+author: "Thompson Santiago"
+date: "2026-07-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 0. Set up
+**Libraries**
+```{r lib}
+library(maps)
+library(osmdata)
+library(sf)
+library(terra)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(ggnewscale)
+```
+
+```{r csv}
+dc_data <- read.csv("C:/DLSU/25-26/[4] LBBBI27/activities/a10/occurrence.csv")
+class(dc_data)
+ncol(dc_data)
+```
+
+# Part A. Retrieving spatial data
+
+```{r a3}
+#3. Clean the data by removing records found outside the reported species range.
+dc_sum <- dc_data[,c(63:71, 77:90, 98, 99, 192, 193, 219:230)]
+dc_geo <- dc_data[,c(86,98,99)]
+geo_good <- dc_geo[complete.cases(dc_geo),]
+```
+
+```{r a4}
+#4. Go to the DIVA-GIS website and download the Philippine administrative
+##  boundaries/areas. The zip file contains multiple shapefiles (adm0–3),
+##  representing different boundary levels
+##  (0-country; 1-provincial; 2-municipal; 3-barangay).
+'ph_adm <- read.csv("C:/DLSU/25-26/[4] LBBBI27/activities/a10/PHL_adm1.csv")'
+ph_shp <- st_read("C:/DLSU/25-26/[4] LBBBI27/activities/a10/PHL_adm/PHL_adm1.shp")
+ph_shp
+```
+
+```{r a5}
+#5. Get only the provincial level, and subset the provinces that contain
+##  only distribution records for your assigned species.
+ph_have <- ph_shp[sort(c(2,49,80,15,21,3,30,28,27,29,16,26,67,74,75,48)),]
+ph_poly <- ph_have[,c(5,10)]
+ph_poly
+```
+
+```{r a6}
+#6. Go back to the DIVA-GIS website. Download the Philippine
+##  digital elevation model (“Elevation [country mask]”),
+##  then clip it using the provinces you selected in step 5.
+ph_map <- rast("C:/DLSU/25-26/[4] LBBBI27/activities/a10/ph_ strm_geo.tif")
+dc_map <- mask(crop(ph_map, ph_poly),ph_poly)
+```
+
+# Part B. Create your first map
+
+*With reference to Faith's code
+```{r b1}
+#1. Now, put all the data together into a map, following the pre-lab lecture.
+##  Make sure that data layers (points, polygons, DEMs) are arranged properly. Be creative!
+dc_img <- as.data.frame(dc_map, xy = TRUE)
+
+ggplot() +
+  geom_tile(data = dc_img, aes(x, y, fill = Band_1))+
+  scale_fill_gradientn(
+    colors = c("darkred", "orange", "gold", "darkgreen", "darkblue"),
+    name = "Elevation (m)") +
+  new_scale_fill() +
+  geom_point(data = geo_good,
+             aes(x = decimalLongitude, y = decimalLatitude, fill = stateProvince),
+             shape = 19,
+             color = "black",
+             size = 3,
+             stroke = 1.2) +
+  coord_equal() +
+  labs(title = "Draco cyanopterus Observations",
+       x = "Longitude",
+       y = "Latitude",
+       fill = "Province") +
+  theme_bw()
+```
