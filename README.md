@@ -18,3 +18,6 @@ https://thompsonsantiago-dlsu.github.io/datasci/Santiago_pca.html
 
 Activity 11
 https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Activity%2011/Santiago_linear_reg.html
+
+Activity 10
+https://thompsonsantiago-dlsu.github.io/datasci/myrmarkdown/Activity%2010/Santiago_GIS.html
